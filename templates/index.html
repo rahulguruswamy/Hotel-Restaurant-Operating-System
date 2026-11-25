@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HROS Pro - Hotel &amp; Restaurant Operating System</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js for Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 h-full flex flex-col md:flex-row overflow-hidden transition-colors duration-200">
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="w-full md:w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col justify-between z-20 shrink-0">
+        <div>
+            <!-- App Logo -->
+            <div class="h-16 flex items-center px-6 border-b border-slate-200 dark:border-slate-700 justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-brand-600 text-white p-2 rounded-lg flex items-center justify-center">
+                        <i class="fa-solid fa-hotel text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg leading-tight tracking-wide">HROS Pro</h1>
+                        <span class="text-xs text-slate-500 dark:text-slate-400">Hotel &amp; Dining Suite</span>
+                    </div>
+                </div>
+                <button id="mobileMenuBtn" class="md:hidden text-slate-500 hover:text-slate-700 dark:text-slate-400">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav id="sidebarNav" class="p-4 space-y-1.5 overflow-y-auto max-h-[calc(100vh-140px)]">
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn active w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-sm transition-all bg-brand-50 text-brand-600 dark:bg-brand-900/30 dark:text-brand-400">
+                    <i class="fa-solid fa-chart-pie w-5 text-center"></i>
+                    <span>Dashboard</span>
+                </button>
+
+                <button onclick="switchTab('pos')" id="nav-pos" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-sm transition-all text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50">
+                    <i class="fa-solid fa-cash-register w-5 text-center"></i>
+                    <span>POS &amp; Billing</span>
+                </button>
+
+                <button onclick="switchTab('tables-rooms')" id="nav-tables-rooms" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-sm transition-all text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50">
+                    <i class="fa-solid fa-bed w-5 text-center"></i>
+                    <span>Tables &amp; Rooms</span>
+                </button>
+
+                <button onclick="switchTab('kds')" id="nav-kds" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-sm transition-all text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50">
+                    <i class="fa-solid fa-utensils w-5 text-center"></i>
+                    <span>Kitchen System</span>
+                    <span id="kdsBadge" class="ml-auto bg-amber-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+                </button>
+
+                <button onclick="switchTab('inventory')" id="nav-inventory" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-sm transition-all text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50">
+                    <i class="fa-solid fa-boxes-stacked w-5 text-center"></i>
+                    <span>Inventory</span>
+                    <span id="lowStockBadge" class="ml-auto bg-rose-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+                </button>
+
+                <button onclick="switchTab('analytics')" id="nav-analytics" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-sm transition-all text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50">
+                    <i class="fa-solid fa-chart-line w-5 text-center"></i>
+                    <span>Analytics</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Sidebar Footer -->
+        <div class="p-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
+            <button onclick="openModal('loginModal')" class="flex items-center space-x-3 text-left hover:opacity-80 transition" title="Staff Sign In / Switch">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80" alt="Avatar" class="w-9 h-9 rounded-full object-cover">
+                <div>
+                    <p id="staffName" class="text-sm font-semibold text-slate-800 dark:text-slate-200">Sarah Jenkins</p>
+                    <p id="staffRole" class="text-xs text-slate-500 dark:text-slate-400 capitalize">Shift Manager</p>
+                </div>
+            </button>
+            <button id="themeToggle" class="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 transition">
+                <i class="fa-solid fa-moon dark:hidden"></i>
+                <i class="fa-solid fa-sun hidden dark:block text-amber-400"></i>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden bg-slate-50 dark:bg-slate-900">
+
+        <!-- Header Bar -->
+        <header class="h-16 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/80 backdrop-blur px-6 flex items-center justify-between shrink-0">
+            <div class="flex items-center space-x-4">
+                <h2 id="pageTitle" class="text-xl font-bold text-slate-800 dark:text-white">Dashboard Overview</h2>
+                <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-400">
+                    <span class="w-1.5 h-1.5 mr-1.5 bg-emerald-500 rounded-full animate-pulse"></span> Live SQLite DB
+                </span>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <button onclick="openModal('newOrderModal')" class="hidden sm:flex items-center space-x-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium px-3.5 py-2 rounded-lg transition shadow-sm">
+                    <i class="fa-solid fa-plus text-xs"></i>
+                    <span>Quick Order</span>
+                </button>
+                <button onclick="openModal('checkInModal')" class="flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-3.5 py-2 rounded-lg transition shadow-sm">
+                    <i class="fa-solid fa-user-plus text-xs"></i>
+                    <span>Check-In Guest</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Tab Views Container -->
+        <div class="flex-1 overflow-y-auto p-4 md:p-6">
+
+            <!-- 1. DASHBOARD VIEW -->
+            <section id="view-dashboard" class="tab-view space-y-6">
+                <!-- Metrics Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Revenue</p>
+                                <h3 id="dashRevenue" class="text-2xl font-bold mt-1">$0.00</h3>
+                            </div>
+                            <div class="p-3 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-xl">
+                                <i class="fa-solid fa-dollar-sign text-xl"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex items-center text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                            <span id="dashRevenueSub">Loading revenue...</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Room Occupancy</p>
+                                <h3 id="dashOccupancy" class="text-2xl font-bold mt-1">0%</h3>
+                            </div>
+                            <div class="p-3 bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-xl">
+                                <i class="fa-solid fa-bed text-xl"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex items-center text-xs text-slate-500 dark:text-slate-400">
+                            <span id="dashOccupancySub">0 of 0 Rooms Occupied</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Active Tables &amp; Bookings</p>
+                                <h3 id="dashTables" class="text-2xl font-bold mt-1">0 / 0</h3>
+                            </div>
+                            <div class="p-3 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-xl">
+                                <i class="fa-solid fa-chair text-xl"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex items-center text-xs text-amber-600 dark:text-amber-400 font-medium">
+                            <span id="dashTablesSub">0 Active Bookings</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Kitchen Orders</p>
+                                <h3 id="dashPendingOrders" class="text-2xl font-bold mt-1">0 Pending</h3>
+                            </div>
+                            <div class="p-3 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-xl">
+                                <i class="fa-solid fa-fire text-xl"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex items-center text-xs text-indigo-600 dark:text-indigo-400 font-medium">
+                            <span id="dashOrdersSub">Live Kitchen Queue</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Grid: Activity Feed & Actions -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Recent Transactions & Live Feed -->
+                    <div class="lg:col-span-2 bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 shadow-sm">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-slate-800 dark:text-white">Recent Transactions &amp; Live Feed</h3>
+                            <button onclick="loadDashboard(true)" class="text-xs text-brand-600 dark:text-brand-400 hover:underline">Refresh</button>
+                        </div>
+                        <div id="activityFeed" class="space-y-3 max-h-[380px] overflow-y-auto pr-2">
+                            <!-- Populated from SQLite via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Quick Operations Card -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+                        <h3 class="font-bold text-slate-800 dark:text-white">Quick Management</h3>
+                        <div class="space-y-2.5">
+                            <button onclick="switchTab('pos')" class="w-full text-left p-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-brand-500 hover:bg-brand-50/50 dark:hover:bg-slate-700/50 transition flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="p-2 bg-brand-100 text-brand-600 rounded-lg"><i class="fa-solid fa-plus"></i></div>
+                                    <div>
+                                        <p class="font-semibold text-sm">Create New Billing Order</p>
+                                        <p class="text-xs text-slate-500">POS / Restaurant / Room Service</p>
+                                    </div>
+                                </div>
+                                <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+                            </button>
+
+                            <button onclick="openModal('checkInModal')" class="w-full text-left p-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-slate-700/50 transition flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="p-2 bg-emerald-100 text-emerald-600 rounded-lg"><i class="fa-solid fa-key"></i></div>
+                                    <div>
+                                        <p class="font-semibold text-sm">Guest Room Check-In</p>
+                                        <p class="text-xs text-slate-500">Assign room &amp; guest details</p>
+                                    </div>
+                                </div>
+                                <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+                            </button>
+
+                            <button onclick="openModal('bookingModal')" class="w-full text-left p-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-sky-500 hover:bg-sky-50/50 dark:hover:bg-slate-700/50 transition flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="p-2 bg-sky-100 text-sky-600 rounded-lg"><i class="fa-solid fa-calendar-days"></i></div>
+                                    <div>
+                                        <p class="font-semibold text-sm">Create Room Booking</p>
+                                        <p class="text-xs text-slate-500">Date check &amp; overlap protection</p>
+                                    </div>
+                                </div>
+                                <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+                            </button>
+
+                            <button onclick="openModal('reserveTableModal')" class="w-full text-left p-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-purple-500 hover:bg-purple-50/50 dark:hover:bg-slate-700/50 transition flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="p-2 bg-purple-100 text-purple-600 rounded-lg"><i class="fa-solid fa-calendar-check"></i></div>
+                                    <div>
+                                        <p class="font-semibold text-sm">Reserve Dining Table</p>
+                                        <p class="text-xs text-slate-500">Book table for guest</p>
+                                    </div>
+                                </div>
+                                <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. POS & BILLING VIEW -->
+            <section id="view-pos" class="tab-view hidden grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
+                <!-- Left: Category & Menu Grid -->
+                <div class="lg:col-span-2 flex flex-col space-y-4">
+                    <div class="flex items-center space-x-2 overflow-x-auto pb-2 scrollbar-none">
+                        <button onclick="filterMenu('all', this)" class="cat-btn active bg-brand-600 text-white px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap shadow-sm">All Items</button>
+                        <button onclick="filterMenu('mains', this)" class="cat-btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap border border-slate-200 dark:border-slate-700 hover:bg-slate-100">Main Dishes</button>
+                        <button onclick="filterMenu('appetizers', this)" class="cat-btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap border border-slate-200 dark:border-slate-700 hover:bg-slate-100">Appetizers</button>
+                        <button onclick="filterMenu('drinks', this)" class="cat-btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap border border-slate-200 dark:border-slate-700 hover:bg-slate-100">Beverages</button>
+                        <button onclick="filterMenu('desserts', this)" class="cat-btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap border border-slate-200 dark:border-slate-700 hover:bg-slate-100">Desserts</button>
+                    </div>
+
+                    <div id="menuGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-4 overflow-y-auto max-h-[calc(100vh-230px)] pr-1">
+                        <!-- Populated from SQLite -->
+                    </div>
+                </div>
+
+                <!-- Right: Order Cart -->
+                <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col h-full shadow-sm">
+                    <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+                        <div>
+                            <h3 class="font-bold text-slate-800 dark:text-white">Current Order</h3>
+                            <p class="text-xs text-slate-500">Select order target below</p>
+                        </div>
+                        <select id="orderTarget" class="bg-slate-100 dark:bg-slate-700 text-xs font-semibold rounded-lg px-2.5 py-1.5 border-none focus:ring-2 focus:ring-brand-500">
+                            <option value="Takeaway">Takeaway</option>
+                        </select>
+                    </div>
+
+                    <div id="cartItemsList" class="flex-1 p-4 overflow-y-auto space-y-3">
+                        <div class="text-center py-10 text-slate-400 text-sm">
+                            <i class="fa-solid fa-basket-shopping text-3xl mb-2 opacity-50"></i>
+                            <p>No items added to order yet.</p>
+                        </div>
+                    </div>
+
+                    <div class="p-4 border-t border-slate-200 dark:border-slate-700 space-y-3 bg-slate-50/50 dark:bg-slate-800/50 rounded-b-2xl">
+                        <div class="flex justify-between text-xs text-slate-500">
+                            <span>Subtotal</span>
+                            <span id="cartSubtotal">$0.00</span>
+                        </div>
+                        <div class="flex justify-between text-xs text-slate-500">
+                            <span>Tax (8%) &amp; Service (10%)</span>
+                            <span id="cartTax">$0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs text-slate-500">
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" id="discountToggle" onchange="updateCartUI()" class="rounded text-brand-600 focus:ring-brand-500">
+                                <span>Apply VIP Discount (10%)</span>
+                            </label>
+                            <span id="cartDiscount" class="text-emerald-600">-$0.00</span>
+                        </div>
+                        <div class="pt-2 border-t border-slate-200 dark:border-slate-700 flex justify-between font-bold text-base text-slate-800 dark:text-white">
+                            <span>Total Due</span>
+                            <span id="cartTotal" class="text-brand-600 dark:text-brand-400">$0.00</span>
+                        </div>
+                        <button onclick="processCheckout()" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3 rounded-xl transition shadow flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-credit-card"></i>
+                            <span>Proceed to Payment (Demo)</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. TABLES, ROOMS, BOOKINGS & GUESTS VIEW -->
+            <section id="view-tables-rooms" class="tab-view hidden space-y-6">
+                <!-- Section Selector Tabs -->
+                <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-700">
+                    <div class="flex overflow-x-auto space-x-6">
+                        <button onclick="toggleVisualizerTab('tables')" id="subnav-tables" class="pb-3 font-semibold text-brand-600 border-b-2 border-brand-600 flex items-center space-x-2 whitespace-nowrap">
+                            <i class="fa-solid fa-chair"></i>
+                            <span>Restaurant Tables</span>
+                        </button>
+                        <button onclick="toggleVisualizerTab('rooms')" id="subnav-rooms" class="pb-3 font-semibold text-slate-500 border-b-2 border-transparent hover:text-slate-700 dark:hover:text-slate-300 flex items-center space-x-2 whitespace-nowrap">
+                            <i class="fa-solid fa-door-closed"></i>
+                            <span>Hotel Rooms</span>
+                        </button>
+                        <button onclick="toggleVisualizerTab('bookings')" id="subnav-bookings" class="pb-3 font-semibold text-slate-500 border-b-2 border-transparent hover:text-slate-700 dark:hover:text-slate-300 flex items-center space-x-2 whitespace-nowrap">
+                            <i class="fa-solid fa-calendar-days"></i>
+                            <span>Bookings</span>
+                        </button>
+                        <button onclick="toggleVisualizerTab('guests')" id="subnav-guests" class="pb-3 font-semibold text-slate-500 border-b-2 border-transparent hover:text-slate-700 dark:hover:text-slate-300 flex items-center space-x-2 whitespace-nowrap">
+                            <i class="fa-solid fa-users"></i>
+                            <span>Guests</span>
+                        </button>
+                        <button onclick="toggleVisualizerTab('reservations')" id="subnav-reservations" class="pb-3 font-semibold text-slate-500 border-b-2 border-transparent hover:text-slate-700 dark:hover:text-slate-300 flex items-center space-x-2 whitespace-nowrap">
+                            <i class="fa-solid fa-utensils"></i>
+                            <span>Table Reservations</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sub-view 3A: Tables -->
+                <div id="subview-tables" class="space-y-4">
+                    <div class="flex flex-wrap justify-between items-center gap-3">
+                        <div class="flex flex-wrap gap-4 text-xs font-medium text-slate-600 dark:text-slate-400">
+                            <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-emerald-500 mr-1.5"></span> Available</span>
+                            <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-rose-500 mr-1.5"></span> Occupied</span>
+                            <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-amber-500 mr-1.5"></span> Reserved</span>
+                            <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-slate-400 mr-1.5"></span> Cleaning</span>
+                            <span class="text-slate-400">(Click a table to cycle status)</span>
+                        </div>
+                        <button onclick="openModal('reserveTableModal')" class="bg-purple-600 hover:bg-purple-700 text-white px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5">
+                            <i class="fa-solid fa-calendar-check"></i><span>Reserve Table</span>
+                        </button>
+                    </div>
+                    <div id="visualizerTables" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"></div>
+                </div>
+
+                <!-- Sub-view 3B: Rooms -->
+                <div id="subview-rooms" class="hidden space-y-4">
+                    <div class="flex flex-wrap justify-between items-center gap-3">
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Add, edit, delete rooms, or check guests in/out directly.</p>
+                        <button onclick="openRoomModal()" class="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5">
+                            <i class="fa-solid fa-plus"></i><span>Add Room</span>
+                        </button>
+                    </div>
+                    <div id="visualizerRooms" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+                </div>
+
+                <!-- Sub-view 3C: Bookings -->
+                <div id="subview-bookings" class="hidden space-y-4">
+                    <div class="flex flex-wrap justify-between items-center gap-3">
+                        <div>
+                            <h3 class="font-bold text-slate-800 dark:text-white">Room Bookings</h3>
+                            <p class="text-xs text-slate-500">Automatic date overlap prevention &amp; nightly rate calculation</p>
+                        </div>
+                        <button onclick="openBookingModal()" class="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5">
+                            <i class="fa-solid fa-plus"></i><span>New Booking</span>
+                        </button>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-slate-50 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 uppercase text-xs">
+                                    <tr>
+                                        <th class="p-4">Ref</th>
+                                        <th class="p-4">Guest</th>
+                                        <th class="p-4">Room</th>
+                                        <th class="p-4">Dates</th>
+                                        <th class="p-4">Amount</th>
+                                        <th class="p-4">Status</th>
+                                        <th class="p-4 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bookingsTableBody" class="divide-y divide-slate-200 dark:divide-slate-700"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sub-view 3D: Guests -->
+                <div id="subview-guests" class="hidden space-y-4">
+                    <div class="flex flex-wrap justify-between items-center gap-3">
+                        <div class="relative flex-1 max-w-sm">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                            <input type="text" id="guestSearchInput" oninput="loadGuests(this.value)" placeholder="Search guests by name, phone, email..." class="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                        </div>
+                        <button onclick="openGuestModal()" class="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5">
+                            <i class="fa-solid fa-user-plus"></i><span>Add Guest</span>
+                        </button>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-slate-50 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 uppercase text-xs">
+                                    <tr>
+                                        <th class="p-4">Full Name</th>
+                                        <th class="p-4">Phone</th>
+                                        <th class="p-4">Email</th>
+                                        <th class="p-4">ID Proof</th>
+                                        <th class="p-4 text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="guestsTableBody" class="divide-y divide-slate-200 dark:divide-slate-700"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sub-view 3E: Table Reservations -->
+                <div id="subview-reservations" class="hidden space-y-4">
+                    <div class="flex flex-wrap justify-between items-center gap-3">
+                        <div>
+                            <h3 class="font-bold text-slate-800 dark:text-white">Dining Table Reservations</h3>
+                            <p class="text-xs text-slate-500">Manage upcoming restaurant bookings</p>
+                        </div>
+                        <button onclick="openModal('reserveTableModal')" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5">
+                            <i class="fa-solid fa-plus"></i><span>New Reservation</span>
+                        </button>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-slate-50 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 uppercase text-xs">
+                                    <tr>
+                                        <th class="p-4">Table</th>
+                                        <th class="p-4">Guest</th>
+                                        <th class="p-4">Party</th>
+                                        <th class="p-4">Date &amp; Time</th>
+                                        <th class="p-4">Status</th>
+                                        <th class="p-4 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reservationsTableBody" class="divide-y divide-slate-200 dark:divide-slate-700"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. KITCHEN DISPLAY SYSTEM (KDS) -->
+            <section id="view-kds" class="tab-view hidden space-y-4">
+                <div class="flex justify-between items-center">
+                    <p class="text-sm text-slate-500">Live order tickets sent from POS and Room Service.</p>
+                    <button onclick="loadKDS()" class="text-xs bg-slate-200 dark:bg-slate-700 px-3 py-1 rounded-full font-medium hover:opacity-80">Refresh Queue</button>
+                </div>
+                <div id="kdsTicketsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            </section>
+
+            <!-- 5. INVENTORY VIEW -->
+            <section id="view-inventory" class="tab-view hidden space-y-6">
+                <div class="flex justify-between items-center flex-wrap gap-4">
+                    <div>
+                        <h3 class="font-bold text-slate-800 dark:text-white text-lg">Stock &amp; Supply Tracker</h3>
+                        <p class="text-xs text-slate-500">Auto-deducts linked ingredients on POS orders and warns on low stock</p>
+                    </div>
+                    <button onclick="openModal('addStockModal')" class="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition flex items-center space-x-2">
+                        <i class="fa-solid fa-plus text-xs"></i>
+                        <span>Add New Item</span>
+                    </button>
+                </div>
+
+                <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-50 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 uppercase text-xs">
+                                <tr>
+                                    <th class="p-4">Item Name</th>
+                                    <th class="p-4">Category</th>
+                                    <th class="p-4">Current Stock</th>
+                                    <th class="p-4">Status</th>
+                                    <th class="p-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventoryTableBody" class="divide-y divide-slate-200 dark:divide-slate-700"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 6. ANALYTICS VIEW -->
+            <section id="view-analytics" class="tab-view hidden space-y-6">
+                <!-- Real DB Summary Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                        <p class="text-xs font-semibold uppercase text-slate-500">Revenue Breakdown</p>
+                        <p id="analyticsRevSplit" class="text-sm font-bold mt-2 text-slate-800 dark:text-white">POS: $0.00 | Rooms: $0.00</p>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                        <p class="text-xs font-semibold uppercase text-slate-500">Booking Statistics</p>
+                        <p id="analyticsBookingStats" class="text-sm font-bold mt-2 text-slate-800 dark:text-white">Loading...</p>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                        <p class="text-xs font-semibold uppercase text-slate-500">Inventory Health</p>
+                        <p id="analyticsInventoryStats" class="text-sm font-bold mt-2 text-slate-800 dark:text-white">Loading...</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                        <h3 class="font-bold text-slate-800 dark:text-white mb-4">7-Day Revenue Trend ($)</h3>
+                        <div class="h-64 relative">
+                            <canvas id="salesChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                        <h3 class="font-bold text-slate-800 dark:text-white mb-4">Top Ordered Menu Items</h3>
+                        <div class="h-64 relative">
+                            <canvas id="topItemsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- MODALS -->
+
+    <!-- Quick Order Modal -->
+    <div id="newOrderModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-200 dark:border-slate-700 space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-lg text-slate-800 dark:text-white">Start Quick Order</h3>
+                <button onclick="closeModal('newOrderModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div>
+                <label class="text-xs font-semibold text-slate-600 dark:text-slate-300">Select Table / Room / Takeaway</label>
+                <select id="quickOrderTarget" class="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm outline-none"></select>
+            </div>
+            <button onclick="startQuickOrder()" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-xl transition">
+                Open POS &amp; Add Items
+            </button>
+        </div>
+    </div>
+
+    <!-- Quick Check-In Guest Modal -->
+    <div id="checkInModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 dark:border-slate-700 space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-lg text-slate-800 dark:text-white">Guest Room Check-In</h3>
+                <button onclick="closeModal('checkInModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="handleCheckIn(event)" class="space-y-3">
+                <div>
+                    <label class="text-xs font-semibold text-slate-600 dark:text-slate-300">Guest Full Name</label>
+                    <input type="text" id="checkInName" required class="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-600 dark:text-slate-300">Phone Number</label>
+                    <input type="text" id="checkInPhone" placeholder="+1-555-0199" class="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-600 dark:text-slate-300">Select Available Room</label>
+                    <select id="checkInRoomSelect" class="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 outline-none"></select>
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-600 dark:text-slate-300">Nights Stay</label>
+                    <input type="number" id="checkInNights" min="1" value="1" required class="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 rounded-xl transition mt-2">
+                    Complete Check-In
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add/Edit Room Modal -->
+    <div id="roomModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 dark:border-slate-700 space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 id="roomModalTitle" class="font-bold text-lg text-slate-800 dark:text-white">Add Room</h3>
+                <button onclick="closeModal('roomModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="handleSaveRoom(event)" class="space-y-3">
+                <input type="hidden" id="roomEditId">
+                <div>
+                    <label class="text-xs font-semibold text-slate-600 dark:text-slate-300">Room Number</label>
+                    <input type="text" id="roomNumberInput" required placeholder="e.g. 301" class="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm outline-none">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-600 dark:text-slate-300">Room Type</label>
+                    <input type="text" id="roomTypeInput" required placeholder="e.g. Deluxe King" class="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm outline-none">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-600 dark:text-slate-300">Price Per Night ($)</label>
+                    <input type="number" step="0.01" min="1" id="roomPriceInput" required placeholder="180.00" class="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm outline-none">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-600 dark:text-slate-300">Status</label>
+                    <select id="roomStatusInput" class="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm outline-none">
+                        <option value="available">Available</option>
+                        <option value="occupied">Occupied</option>
+                        <option value="reserved">Reserved</option>
+                        <option value="cleaning">Cleaning</option>
+                        <option value="maintenance">Maintenance</option>
+                    </select>
+                </div>
+                <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-xl transition">Save Room</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add/Edit Guest Modal -->
+    <div id="guestModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 dark:border-slate-700 space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 id="guestModalTitle" class="font-bold text-lg text-slate-800 dark:text-white">Add Guest</h3>
+                <button onclick="closeModal('guestModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="handleSaveGuest(event)" class="space-y-3">
+                <input type="hidden" id="guestEditId">
+                <div>
+                    <label class="text-xs font-semibold text-slate-600 dark:text-slate-300">Full Name</label>
+                    <input type="text" id="guestNameInput" required class="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs font-semibold text-slate-600 dark:text-slate-300">Phone</label>
+                        <input type="text" id="guestPhoneInput" class="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm outline-none">
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-slate-600 dark:text-slate-300">ID Proof</label>
+                        <input type="text" id="guestIdProofInput" placeholder="Passport / DL" class="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-600 dark:text-slate-300">Email</label>
+                    <input type="email" id="guestEmailInput" class="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm outline-none">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-600 dark:text-slate-300">Address</label>
+                    <input type="text" id="guestAddressInput" class="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm outline-none">
+                </div>
+                <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-xl transition">Save Guest</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Booking Modal (With Date Availability & Amount Calculation) -->
+    <div id="bookingModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 dark:border-slate-700 space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-lg text-slate-800 dark:text-white">Create Room Booking</h3>
+                <button onclick="closeModal('bookingModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="handleCreateBooking(event)" class="space-y-3">
+                <div>
+                    <label class="text-xs font-semibold text-slate-600 dark:text-slate-300">Select Guest</label>
+                    <select id="bookingGuestSelect" required class="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm outline-none"></select>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs font-semibold text-slate-600 dark:text-slate-300">Check-In Date</label>
+                        <input type="date" id="bookingCheckInDate" required onchange="refreshBookingAvailableRooms()" class="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm outline-none">
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-slate-600 dark:text-slate-300">Check-Out Date</label>
+                        <input type="date" id="bookingCheckOutDate" required onchange="refreshBookingAvailableRooms()" class="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-600 dark:text-slate-300">Available Rooms for Selected Dates</label>
+                    <select id="bookingRoomSelect" required onchange="updateBookingEstimate()" class="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm outline-none"></select>
+                </div>
+                <div id="bookingEstimateBox" class="p-3 rounded-xl bg-brand-50/70 dark:bg-brand-900/20 text-xs font-semibold text-brand-700 dark:text-brand-300">
+                    Select dates and room to calculate total.
+                </div>
+                <label class="flex items-center space-x-2 text-xs text-slate-600 dark:text-slate-300 cursor-pointer">
+                    <input type="checkbox" id="bookingCheckInNow" class="rounded text-brand-600">
+                    <span>Check guest in immediately</span>
+                </label>
+                <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-xl transition">Confirm Booking</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Table Reservation Modal -->
+    <div id="reserveTableModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 dark:border-slate-700 space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-lg text-slate-800 dark:text-white">Reserve Dining Table</h3>
+                <button onclick="closeModal('reserveTableModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="handleReserveTable(event)" class="space-y-3">
+                <div>
+                    <label class="text-xs font-semibold text-slate-600 dark:text-slate-300">Reservation Name</label>
+                    <input type="text" id="reserveName" required class="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs font-semibold text-slate-600 dark:text-slate-300">Phone</label>
+                        <input type="text" id="reservePhone" placeholder="+1-555-0123" class="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm outline-none">
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-slate-600 dark:text-slate-300">Party Size</label>
+                        <input type="number" id="reservePartySize" min="1" value="2" required class="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-600 dark:text-slate-300">Reservation Date &amp; Time</label>
+                    <input type="datetime-local" id="reserveDateTime" required class="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm outline-none">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-600 dark:text-slate-300">Select Table</label>
+                    <select id="reserveTableSelect" required class="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 outline-none"></select>
+                </div>
+                <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2.5 rounded-xl transition mt-2">
+                    Confirm Reservation
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Inventory Modal -->
+    <div id="addStockModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 dark:border-slate-700 space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-lg text-slate-800 dark:text-white">Add Inventory Item</h3>
+                <button onclick="closeModal('addStockModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="handleAddStockItem(event)" class="space-y-3">
+                <div>
+                    <label class="text-xs font-semibold text-slate-600 dark:text-slate-300">Item Name</label>
+                    <input type="text" id="stockNameInput" required placeholder="e.g. Olive Oil" class="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs font-semibold text-slate-600 dark:text-slate-300">Category</label>
+                        <input type="text" id="stockCategoryInput" required placeholder="Pantry / Dairy" class="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm outline-none">
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-slate-600 dark:text-slate-300">Unit</label>
+                        <input type="text" id="stockUnitInput" required value="kg" class="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm outline-none">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs font-semibold text-slate-600 dark:text-slate-300">Initial Stock</label>
+                        <input type="number" step="0.1" min="0" id="stockQtyInput" required value="10" class="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm outline-none">
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-slate-600 dark:text-slate-300">Low Stock Warning At</label>
+                        <input type="number" step="0.1" min="0" id="stockThresholdInput" required value="5" class="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm outline-none">
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-xl transition">Save Inventory Item</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Checkout Modal (Clearly Labeled Demonstration Workflow) -->
+    <div id="checkoutModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 dark:border-slate-700 space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-lg text-slate-800 dark:text-white">Demo Payment Checkout</h3>
+                <button onclick="closeModal('checkoutModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <p class="text-[11px] bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-3 py-2 rounded-lg font-medium">
+                <i class="fa-solid fa-circle-info mr-1"></i> Demonstration payment workflow for college project simulation. No real money or card gateway is charged.
+            </p>
+
+            <div class="bg-slate-50 dark:bg-slate-700/40 p-4 rounded-xl text-center space-y-1">
+                <span class="text-xs text-slate-500 uppercase font-bold">Total Amount Due</span>
+                <h2 id="checkoutAmount" class="text-3xl font-extrabold text-brand-600 dark:text-brand-400">$0.00</h2>
+            </div>
+
+            <div class="space-y-2">
+                <label class="text-xs font-semibold text-slate-600 dark:text-slate-300">Payment Method</label>
+                <div class="grid grid-cols-3 gap-2">
+                    <button type="button" onclick="selectPayMethod('cash')" id="payBtn-cash" class="pay-method-btn active p-3 rounded-xl border-2 border-brand-500 text-center text-xs font-bold text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-900/20">
+                        <i class="fa-solid fa-money-bill-wave text-base mb-1 block"></i> Cash
+                    </button>
+                    <button type="button" onclick="selectPayMethod('card')" id="payBtn-card" class="pay-method-btn p-3 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-center text-xs font-bold text-slate-600 dark:text-slate-400">
+                        <i class="fa-solid fa-credit-card text-base mb-1 block"></i> Card
+                    </button>
+                    <button type="button" onclick="selectPayMethod('upi')" id="payBtn-upi" class="pay-method-btn p-3 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-center text-xs font-bold text-slate-600 dark:text-slate-400">
+                        <i class="fa-solid fa-qrcode text-base mb-1 block"></i> UPI / App
+                    </button>
+                </div>
+            </div>
+
+            <button onclick="confirmPayment()" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3 rounded-xl transition shadow">
+                Complete Demo Checkout &amp; View Receipt
+            </button>
+        </div>
+    </div>
+
+    <!-- Receipt Modal -->
+    <div id="receiptModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div id="receiptPrintArea" class="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 dark:border-slate-700 space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-3">
+                <div>
+                    <h3 class="font-bold text-lg text-slate-800 dark:text-white">HROS Pro Receipt</h3>
+                    <p class="text-[11px] text-amber-600 font-semibold">DEMO TRANSACTION RECEIPT</p>
+                </div>
+                <button onclick="closeModal('receiptModal')" class="no-print text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div id="receiptContent" class="text-xs space-y-2"></div>
+            <div class="no-print flex space-x-2 pt-2">
+                <button onclick="window.print()" class="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-semibold py-2.5 rounded-xl text-xs">
+                    <i class="fa-solid fa-print mr-1"></i> Print Receipt
+                </button>
+                <button onclick="closeModal('receiptModal')" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-xl text-xs">
+                    Done
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Staff Sign-In Modal (Password Hashing Demo) -->
+    <div id="loginModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-200 dark:border-slate-700 space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-lg text-slate-800 dark:text-white">Staff Account Sign-In</h3>
+                <button onclick="closeModal('loginModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <p class="text-xs text-slate-500">Demo Manager: <code>sarah@hros.local</code> / <code>Manager@123</code></p>
+            <form onsubmit="handleLogin(event)" class="space-y-3">
+                <div>
+                    <label class="text-xs font-semibold text-slate-600 dark:text-slate-300">Email</label>
+                    <input type="email" id="loginEmail" required value="sarah@hros.local" class="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm outline-none">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-600 dark:text-slate-300">Password</label>
+                    <input type="password" id="loginPassword" required value="Manager@123" class="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm outline-none">
+                </div>
+                <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-xl transition">Sign In</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification Overlay -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 text-white text-sm px-4 py-3 rounded-xl shadow-lg z-50 flex items-center space-x-3 transition-all duration-300 transform translate-y-20 opacity-0">
+        <i class="fa-solid fa-circle-check text-emerald-400 text-base" id="toastIcon"></i>
+        <span id="toastMsg">Action completed successfully</span>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
